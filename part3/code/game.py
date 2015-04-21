@@ -1,8 +1,8 @@
 import pygame, random, sys
 from pygame.locals import *
 import globalDefs
-# from bear import *
 from player import Player
+
 def startGame():
     pygame.init()
     mainClock = pygame.time.Clock()
@@ -17,7 +17,8 @@ def startGame():
     window_surface.blit(globalDefs.background, (-10,-10))
     font = pygame.font.Font("./resources/manteka.ttf", 30)
     
-    player = Player()
+    player = Player('./resources/spaceship.png', "left", 0, globalDefs.WINDOWHEIGHT/2)
+    enemy = Player('./resources/enemy.png', "right", globalDefs.WINDOWWIDTH-70, globalDefs.WINDOWHEIGHT/2)
         
     
     def terminate():
@@ -51,8 +52,10 @@ def startGame():
         window_surface.blit(globalDefs.background, (0,0))
 
         window_surface.blit(player.image, player.rect)
+        window_surface.blit(enemy.image, enemy.rect)
         
         player.update(window_surface)
+        enemy.update(window_surface)
         
         pygame.display.update()
 
@@ -63,11 +66,19 @@ def startGame():
             terminate()
         if event.type == KEYDOWN:
             if event.key == K_DOWN:
-                player.move_mod(True, False)
+                enemy.move_mod(True, False)
             if event.key == K_UP:
-                player.move_mod(False, True)
+                enemy.move_mod(False, True)
             if event.key == K_SPACE:
+                enemy.fire_laser()
+
+            if event.key == K_w:
+                player.move_mod(False, True)
+            if event.key == K_s:
+                player.move_mod(True, False)
+            if event.key == K_LSHIFT:
                 player.fire_laser()
+            
         if event.type == KEYUP:
             if event.key == K_ESCAPE:
                 drawText('press enter to unpause', font, window_surface, (globalDefs.WINDOWWIDTH /3), (globalDefs.WINDOWHEIGHT / 3))
@@ -75,8 +86,13 @@ def startGame():
                 pygame.display.update()
                 wait_key()
             if event.key == K_UP:
-                player.move_mod(False, False)
+                enemy.move_mod(False, False)
             if event.key == K_DOWN:
+                enemy.move_mod(False, False)
+
+            if event.key == K_w:
+                player.move_mod(False, False)
+            if event.key == K_s:
                 player.move_mod(False, False)
 
 
