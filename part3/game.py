@@ -1,84 +1,32 @@
-import pygame, sys, math, csv, time
+import pygame, random, sys
 from pygame.locals import *
 
-""" Problems to solve:
-
-Implement a maximum velocity for the cat- make sure that it can't go too fast. 
-
-Implement a "wall" feature- the cat's velocity should go to 0 whenever it hits a wall (only negating y velocity if it hits the top or bottom,
-and only negating x velocity if it hits the sides)
-
-Bonus: the cat currently negates both up and down motion when either a up or a down key is released (and same for left/right).
-Fix this so that the cat is still affected by the button currently pressed. 
-
-"""
-
-class player(pygame.sprite.Sprite):
-    def __init__(self, name, image, xpos, ypos, width, height):
-        self.name = name
-        self.health = health
-        self.image = pygame.image.load(image).convert_alpha()
-        self.image = pygame.transform.scale(self.image, (width, height))
-        self.rect = self.image.get_rect()
-        # self.image.fill(RED)
-        self.rect.x = xpos
-        self.rect.y = ypos
-        self.actions = actions
-        self.fight_menu = fightMenu(self, self.actions)
-        self.fight_menu.hide()
-        pygame.sprite.Sprite.__init__(self)
-        
-    def damage(self, pain):
-        self.health -= pain
-        if self.health < 0:
-            self.fight_menu.hide()
-            # del self.fight_menu
-            self.kill()
-
-    def attack(self):
-        return 10 # for now
-        
-    def update(self, surface):
-        self.fight_menu.update()
-        surface.blit(self.image, self.rect)
-        
-    def click(self):
-        # global selected_player
-        # selected_player = self
-        # print(selected_player)
-        self.fight_menu.show()
-
-    def unselect(self):
-        self.fight_menu.hide()
-
-def game():
+def startGame():
     
-    player_x_vel = 0.0
-    player_y_vel = 0.0
-
     pygame.init()
-    
-    FPS = 60 # frames per second setting
-    fps_clock = pygame.time.Clock()
-    
-    DISPLAYSURF = pygame.display.set_mode((0,0),pygame.FULLSCREEN)
-    
+    mainClock = pygame.time.Clock()
+
+    TEXTCOLOR = (0,0,0)
+    BACKGROUNDCOLOR = (255,255,255)
+    FPS = 60
+    windowSurface = pygame.display.set_mode((0,0),pygame.FULLSCREEN)
+    # windowSurface = pygame.display.set_mode((1000,700))
     WINDOWWIDTH = pygame.display.Info().current_w
     WINDOWHEIGHT = pygame.display.Info().current_h
+    # planet = pygame.image.load('./res/okayplanet.png').convert_alpha()
+    background = pygame.transform.scale(pygame.image.load('./res/space.png').convert_alpha(), (WINDOWWIDTH, WINDOWHEIGHT))
+            
+    pygame.display.set_caption('Space Destructor')
+    pygame.mouse.set_visible(False)
+    windowSurface.fill(globalDefs.BACKGROUNDCOLOR)
+    windowSurface.blit(globalDefs.background, (0,0))
+    font = pygame.font.Font("./res/manteka.ttf", 30)
 
-    pygame.display.set_caption('Simple Game')
-    
-    black = (0,0,0)
-    player_img = pygame.image.load('cat.png')
-    player_x = 0.0
-    player_y = 0.0
-    speed = 0.5
-    
     def terminate():
         pygame.quit()
         sys.exit()
-        
-    def wait_key():
+
+    def waitKey():
         while True:
             for event in pygame.event.get():
                 if event.type == QUIT:
@@ -89,49 +37,121 @@ def game():
                     if event.key == K_RETURN:
                         return
 
-    cur_vel_flags = {"x_vel": 0, "y_vel": 0}
-                    
-    while True: # the main game loop
-        DISPLAYSURF.fill(black)
-        DISPLAYSURF.blit(player_img, (player_x, player_y))
-        player_x += player_x_vel
-        player_y += player_y_vel
+    def drawText(text, font, surface, x, y):
+        textobj = font.render(text, 1, TEXTCOLOR)
+        textrect = textobj.get_rect()
+        textrect.topleft = (x,y)
+        surface.blit(textobj, textrect)
 
-        player_x_vel += speed*cur_vel_flags["x_vel"]
-        player_y_vel += speed*cur_vel_flags["y_vel"]
+    def clearScreen():
+        windowSurface.fill(BACKGROUNDCOLOR)
+        windowSurface.blit(background, (0,0))
+
+    def redraw(kit, bear, planets):
+        global window
+        windowSurface.fill(BACKGROUNDCOLOR)
+        windowSurface.blit(background, (0,0))
         
-        if(player_x_vel > 0): 
-            player_x_vel -= .02 # a constant friction effect
-        if(player_x_vel < 0):
-            player_x_vel += .02
-        if(player_y_vel > 0):
-            player_y_vel -= .02
-        if(player_y_vel < 0):
-            player_y_vel += .02
+        #draw text
+        drawText('Score: %s' % (score), font, windowSurface, 10, 0)
+        drawText('Earth Health: %s' % (EarthHealth), font, windowSurface, 10, 48)
+        drawText('spaceCat Health: %s' % (kit.health), font, windowSurface, 10, 96)
+        # drawText('spaceBear Health: %s' % (bear.health), font, windowSurface, 10, 144)
+        # for p in planets:
+            # windowSurface.blit(p['surface'], p['rect'])
+        planets.update();
+        planets.draw(windowSurface)
+        kit.chargeKitty(windowSurface)
+        windowSurface.blit(kit.kittyPic, kit.kitRect)
+        kit.splazers(windowSurface, planets)
 
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == KEYDOWN:
-                if event.key == K_DOWN:
-                    cur_vel_flags["y_vel"] = 1
-                if event.key == K_UP:
-                    cur_vel_flags["y_vel"] = -1 
-                if event.key == K_LEFT:
-                    cur_vel_flags["x_vel"] = -1
-                if event.key == K_RIGHT:
-                    cur_vel_flags["x_vel"] = 1
-                        
-            if event.type == KEYUP:
-                if event.key == K_ESCAPE:
-                    wait_key()
-                if event.key == K_UP or event.key == K_DOWN:
-                    cur_vel_flags["y_vel"] = 0
-                if event.key == K_LEFT or event.key == K_RIGHT:
-                    cur_vel_flags["x_vel"] = 0
-                
+        if (beary.isSummoned()):
+            beary.chargeBear(windowSurface)
+            windowSurface.blit(beary.BearPic, beary.bearRect)
+
+            beary.splazers(windowSurface, planets)
+
+        windowSurface.blit(corg.image, corg.rect)
+        corg.update(kit.kitRect, windowSurface, planets)
+        # corg.rockets.update(windowSurface)
         pygame.display.update()
-        fps_clock.tick(FPS)
+
+        earthHealthIncrementer()
+        mainClock.tick(FPS)
+
+    def earthHealthIncrementer():
+        earthHealthCounter +=1
+        if (earthHealthCounter > 100 & EarthHealth < 100):
+            EarthHealth += 1
+            earthHealthCounter = 0
+
+    def earthChecker():
+        if EarthHealth <= 0:
+            EarthHealth = 100
+            earthDead()
+
+    def eventChecker(event, kit):
+        if event.type == QUIT:
+            terminate()
+        if event.type == KEYDOWN:
+            if event.key == K_DOWN:
+                kit.moveModder(True, False)
+                beary.moveModder(True, False)
+            if event.key == K_UP:
+                kit.moveModder(False, True)
+                beary.moveModder(False, True)
+
+            if event.key == K_LCTRL:
+                corg.fireRockets()
+            if event.key == K_SPACE:
+                kit.laserFire = True
+        if event.type == KEYUP:
+            if event.key == K_ESCAPE:
+                drawText('press enter to unpause', font, windowSurface, (WINDOWWIDTH /3), (WINDOWHEIGHT / 3))
+                drawText('press esc again to exit', font, windowSurface, (WINDOWWIDTH /3), (WINDOWHEIGHT / 3) + 50)
+                pygame.display.update()
+                waitKey()
+            if event.key == K_UP:
+                kit.moveModder(False, False)
+                beary.moveModder(False, False)
+            if event.key == K_DOWN:
+                kit.moveModder(False, False)
+                beary.moveModder(False, False)
+            if event.key == K_SPACE:
+                kit.laserFire = False
+
+    def scoreChecker():
+        if (score > 1):
+            if (score % 100 == 0):
+                score += 1
+                beary.summon()
+                kit.health = 100
+                beary.health = 100
+                for i in planets[:]:
+                    planets.remove(i)
+
+    def laserColDet(kit, beary):
+        if kit.laserRect.colliderect(beary.bearRect) & kit.laserFire == True & beary.isSummoned() == True:
+            beary.health -= kit.kitCharge/100.
+        if beary.laserRect.colliderect(kit.kitRect) & beary.laserFire == True:
+            kit.health -= beary.bearCharge/100.
+
+    windowSurface.fill(BACKGROUNDCOLOR)
+    windowSurface.blit(background, (0,0))
     
-game()
+    kit = kitty()
+    kit.center()
+    beary = bear()
+    beary.center()
+    corg = Corgi()
+    kitOptions = {"dead", kitDead}
+    while True:
+        for event in pygame.event.get():
+            eventChecker(event, kit)
+
+        if (kit.update() == "dead"):
+            kitDead()
+
+        # beary.update()
+
+        # redraw(kit, beary, planets)
