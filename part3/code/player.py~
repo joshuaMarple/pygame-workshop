@@ -1,0 +1,42 @@
+import pygame, sys, random
+from pygame.locals import *
+from rocket import *
+import globalDefs
+class Player(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.health = 100
+        self.image = pygame.transform.scale(pygame.image.load('./res/spaceship.png'), (70,70))
+        self.rect = self.image.get_rect()
+        self.rocketInc = 0
+        self.playerMove = 15
+        self.health = 100
+        self.moveUp = False
+        self.moveDown = False
+        self.rockets = pygame.sprite.Group()
+
+    def fireRockets(self):
+        newrocket = rocket()
+        newrocket.rect.center = self.rect.center
+        self.rockets.add(newrocket)
+
+    def update(self, windowSurface):
+        self.rockets.update()
+        self.rockets.draw(windowSurface)
+        self.move()
+        if (self.health < 0):
+            return "dead"
+
+    def playerMove(self, kitrect):
+        self.rect.top = kitrect.bottom
+        self.rect.right = kitrect.right
+        
+    def moveModder(self, moveUp, moveDown):
+        self.moveUp = moveUp
+        self.moveDown = moveDown
+        
+    def move(self):
+        if self.moveUp and self.rect.top < globalDefs.WINDOWHEIGHT:
+            self.rect.move_ip(0, self.playerMove)
+        if self.moveDown and self.rect.bottom  > 0:
+            self.rect.move_ip(0, -self.playerMove)
